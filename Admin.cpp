@@ -44,7 +44,7 @@ void Admin::AdminMenu(Database& DB)
     int choice;
     Student S;
     Book B;
-  while(1)
+  while(true)
   {
         clearScreen();
         Title("ADMIN  PORTAL");
@@ -73,7 +73,7 @@ void Admin::AdminMenu(Database& DB)
                    if(B.StoreBookData(DB))
                     {
                         Message("Book added successfully...\n");
-                        cout<<"Added time : "<<B.TIME;
+                        //cout<<"Added time : "<<B.BookInclusionTime;
                         this_thread::sleep_for(chrono::milliseconds(3000));
                         clearScreen();
                     }

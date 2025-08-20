@@ -77,40 +77,41 @@ void StudentPortal(Database& DB)
 void HomePage(Database& DB)
 {
     int choice;
-    clearScreen();
-    Title("WELCOME TO MINI LIBRARY MANAGEMENT");
-    cout<<"1) Admin Portal\n\n2) Student Portal\n\n3) Exit\n\n";
+    while (true)
+     { 
+        clearScreen();
+        Title("WELCOME TO MINI LIBRARY MANAGEMENT");
+        cout<<"1) Admin Portal\n\n2) Student Portal\n\n3) Exit\n\n";
 
-    cout<<"Enter your choice\n";
-    cin>>choice;
+        cout<<"Enter your choice\n";
+        cin>>choice;
 
-    switch(choice)
-    {
-    case 1: clearScreen();
-            AdminPortal(DB);
-            break;
+        switch(choice)
+           {
+                case 1: clearScreen();
+                        AdminPortal(DB);
+                        break;
 
-    case 2: clearScreen();
-            StudentPortal(DB);
-            break;
+                case 2: clearScreen();
+                        StudentPortal(DB);
+                        break;
 
-    default: cout<<"Invalid Choice\n";
-            break;
-    
-    case 3: clearScreen();
-            this_thread::sleep_for(chrono::milliseconds(2000));
-            cout<<"W E L C O M E   A G A I N\n";
-            exit(0);
-
-   
-    }
+                default: cout<<"Invalid Choice\n";
+                        break;
+                
+                case 3: clearScreen();
+                        this_thread::sleep_for(chrono::milliseconds(2000));
+                        cout<<"W E L C O M E   A G A I N\n";
+                        exit(0);        
+           }
+     }
 }
 
 
 
 int main() 
 {
-    Database DB("libray.db");
+    Database DB("library.db");
 
     if(DB.createTables())
       cout<<"Tables created successfully"<<endl;

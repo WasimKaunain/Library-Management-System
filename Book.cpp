@@ -8,31 +8,42 @@
 #include <thread>
 using namespace std;
 
+void Book::ShowBookData()
+{
+
+  cout<<"Book Name        : "<<BookName<<endl;
+  cout<<"Book Genre       : "<<BookGenre<<endl;
+  cout<<"Book Author      : "<<BookAuthor<<endl;          
+  cout<<"Book ID          : "<<BookID<<endl;
+  cout<<"Book Price       : "<<BookPrice<<endl;
+  //cout<<"Added On         : "<<TIME<<endl;
+  Line();
+  cout<<endl<<endl;
+}
+
 void Book::SetBookData()
 {
-  clearScreen();
-  Title("SET  BOOKDATA");
+    clearScreen();
+    Title("SET BOOKDATA");
 
-  cout<<"Enter Book name\n";
-  fflush(stdin);
-  getline(cin,BookName);
-  fflush(stdin);
-  cout<<"\nEnter Book Genre\n";
-  cin>>BookGenre;
-  fflush(stdin);
-  cout<<"\nEnter Book Author\n";
-  getline(cin,BookAuthor);
-  fflush(stdin);
-  cout<<"\nEnter BookId\n";
-  cin>>BookID;
-  fflush(stdin);
-  cout<<"\nEnter Book Price\n";
-  fflush(stdin);
-  cin>>BookPrice;
+    cout << "Enter Book name\n";
+    cin.ignore(numeric_limits<streamsize>::max(),'\n');
+    getline(cin, BookName);
 
-  time_t t;
-  time(&t);
-  BookInclusionTime=ctime(&t);
+    cout << "\nEnter Book Genre\n";
+    cin >> BookGenre;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // clear leftover newline
+
+    cout << "\nEnter Book Author\n";
+    getline(cin, BookAuthor);
+
+    cout << "\nEnter Book Price\n";
+    cin >> BookPrice;
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+    time_t t;
+    time(&t);
+    BookInclusionTime = ctime(&t);
 }
 
 
@@ -44,7 +55,7 @@ void Book::ListBookData(Database& DB)
 
   sqlite3_stmt* stmt;
   int count =0;
-  const char* sql = "SELECT * FROM Book;";
+  const char* sql = "SELECT * FROM Books;";
 
   if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
   {
@@ -58,11 +69,12 @@ void Book::ListBookData(Database& DB)
       
       if (rc == SQLITE_ROW) 
       {
-          BookID    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+          BookID    = sqlite3_column_int(stmt, 0);
           BookName  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
           BookAuthor     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
           BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
           BookPrice = sqlite3_column_int(stmt, 4);
+          ShowBookData();
           count++;
       }
 
@@ -79,7 +91,7 @@ void Book::ListBookData(Database& DB)
   }
   sqlite3_finalize(stmt);
   char ch;
-  cout<<"Enter 'Y/y' to go back :"<<endl;
+  cout<<"Enter 'Y/y' to go back"<<endl;
   cin>>ch;
   if(ch == 'Y' || 'y')
     return;
@@ -93,6 +105,7 @@ void Book::DeleteBookData(Database& DB)
 {
   int choice,rc;
   string value;
+  int int_value;
   
   sqlite3_stmt* stmt;
   sqlite3_stmt* delStmt;
@@ -113,7 +126,7 @@ void Book::DeleteBookData(Database& DB)
               cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
               getline(cin,value);
   
-              sql = "SELECT * FROM Book WHERE Name = ?;";
+              sql = "SELECT * FROM Books WHERE Name = ?;";
 
               if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
                 cerr << "Failed to prepare statement: " << sqlite3_errmsg(DB.getDB()) << endl;
@@ -123,10 +136,10 @@ void Book::DeleteBookData(Database& DB)
               rc = sqlite3_step(stmt);
               if (rc == SQLITE_ROW) 
                   {
-                      BookID    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                      BookID    = sqlite3_column_int(stmt, 0);
                       BookName  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
                       BookAuthor = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-                      BookID  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+                      BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
                       BookPrice = sqlite3_column_int(stmt, 4);
                       ShowBookData();
 
@@ -134,7 +147,7 @@ void Book::DeleteBookData(Database& DB)
                       cin>>confirm;
                         if (confirm == 'y' || 'Y')
                             {
-                              const char* delSql = "DELETE FROM Book WHERE Name = ?;";
+                              const char* delSql = "DELETE FROM Books WHERE Name = ?;";
                             
                               if(sqlite3_prepare_v2(DB.getDB(),delSql,-1,&delStmt,nullptr) != SQLITE_OK) 
                                   cerr<<"Failed to prepare delete statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
@@ -165,22 +178,22 @@ void Book::DeleteBookData(Database& DB)
               
       case 2: cout<<"Enter Book ID"<<endl;
               cin.ignore(numeric_limits<streamsize>::max(), '\n');
-              getline(cin,value);
-
-              sql = "SELECT * FROM Book WHERE BookID = ?;";
+              cin>>int_value;
+        
+              sql = "SELECT * FROM Books WHERE BookID = ?;";
 
               if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
                 cerr << "Failed to prepare statement: " << sqlite3_errmsg(DB.getDB()) << endl;
               
-              sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+              sqlite3_bind_int(stmt,1,int_value);
               
               rc = sqlite3_step(stmt);
               if (rc == SQLITE_ROW) 
               {
-                  BookID    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                  BookID    = sqlite3_column_int(stmt, 0);
                   BookName  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
                   BookAuthor = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
-                  BookID  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+                  BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
                   BookPrice = sqlite3_column_int(stmt, 4);
                   ShowBookData();
 
@@ -188,12 +201,12 @@ void Book::DeleteBookData(Database& DB)
                   cin>>confirm;
                   if (confirm == 'y' || 'Y')
                       {
-                        const char* delSql = "DELETE FROM Book WHERE BookID = ?;";
+                        const char* delSql = "DELETE FROM Books WHERE BookID = ?;";
                       
                         if(sqlite3_prepare_v2(DB.getDB(),delSql,-1,&delStmt,nullptr) != SQLITE_OK) 
                             cerr<<"Failed to prepare delete statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
                         
-                        sqlite3_bind_text(delStmt,1,value.c_str(),-1,SQLITE_STATIC);
+                        sqlite3_bind_int(delStmt,1,int_value);
                         
                         rc = sqlite3_step(delStmt);
 
@@ -272,6 +285,7 @@ void Book::SearchBookData(Database& DB)
 {
   int choice,count=0,rc;
   string value;
+  int int_value;
   
   sqlite3_stmt* stmt;
   const char* sql = nullptr;
@@ -291,7 +305,7 @@ void Book::SearchBookData(Database& DB)
               cin.ignore(numeric_limits<streamsize>::max(), '\n');
               getline(cin,value);
   
-              sql = "SELECT * FROM Book WHERE Name = ?;";
+              sql = "SELECT * FROM Books WHERE Name = ?;";
 
               if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
                 cerr << "Failed to prepare statement: " << sqlite3_errmsg(DB.getDB()) << endl;
@@ -304,7 +318,7 @@ void Book::SearchBookData(Database& DB)
 
                   if (rc == SQLITE_ROW) 
                   {
-                      BookID  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                      BookID  = sqlite3_column_int(stmt, 0);
                       BookName    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
                       BookAuthor     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
                       BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
@@ -336,15 +350,15 @@ void Book::SearchBookData(Database& DB)
               
       case 2: cout<<"Enter Book ID :"<<endl;
               cin.ignore(numeric_limits<streamsize>::max(), '\n');
-              getline(cin,value);
+              cin>>int_value;
 
-              sql = "SELECT * FROM Book WHERE BookID = ?;";
+              sql = "SELECT * FROM Books WHERE BookID = ?;";
 
               if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
                 cerr << "Failed to prepare statement: " << sqlite3_errmsg(DB.getDB()) << endl;
 
               
-              sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+              sqlite3_bind_int(stmt,1,int_value);
               
               while(true)
               {
@@ -352,7 +366,7 @@ void Book::SearchBookData(Database& DB)
 
                   if (rc == SQLITE_ROW) 
                   {
-                      BookID  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                      BookID  = sqlite3_column_int(stmt, 0);
                       BookName    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
                       BookAuthor     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
                       BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
@@ -386,7 +400,7 @@ void Book::SearchBookData(Database& DB)
               cin.ignore(numeric_limits<streamsize>::max(), '\n');
               getline(cin,value);
 
-              sql = "SELECT * FROM Book WHERE Author = ?;";
+              sql = "SELECT * FROM Books WHERE Author = ?;";
 
               if(sqlite3_prepare_v2(DB.getDB(), sql, -1, &stmt, nullptr) != SQLITE_OK) 
                 cerr << "Failed to prepare statement: " << sqlite3_errmsg(DB.getDB()) << endl;
@@ -399,7 +413,7 @@ void Book::SearchBookData(Database& DB)
 
                   if (rc == SQLITE_ROW) 
                   {
-                      BookID  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+                      BookID  = sqlite3_column_int(stmt, 0);
                       BookName    = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
                       BookAuthor     = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
                       BookGenre  = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
@@ -443,22 +457,24 @@ void Book::SearchBookData(Database& DB)
 bool Book::StoreBookData(Database& DB)
 {
   sqlite3_stmt* stmt;
-  const char* sql = "INSER INTO Book (BookID,Name,Author,Genre,Price) VALUES (?,?,?,?,?);";
+  const char* sql = "INSERT INTO Books (Name,Author,Genre,Price) VALUES (?,?,?,?);";
 
   if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
     {
       cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
+      this_thread::sleep_for(chrono::milliseconds(2000));
       return false;
     }
-  sqlite3_bind_text(stmt,1,BookID.c_str(),-1,SQLITE_STATIC);
-  sqlite3_bind_text(stmt,2,BookName.c_str(),-1,SQLITE_STATIC);
-  sqlite3_bind_text(stmt,3,BookAuthor.c_str(),-1,SQLITE_STATIC);
-  sqlite3_bind_text(stmt,4,BookGenre.c_str(),-1,SQLITE_STATIC);
-  sqlite3_bind_int(stmt,5,BookPrice);
+  
+  sqlite3_bind_text(stmt,1,BookName.c_str(),-1,SQLITE_STATIC);
+  sqlite3_bind_text(stmt,2,BookAuthor.c_str(),-1,SQLITE_STATIC);
+  sqlite3_bind_text(stmt,3,BookGenre.c_str(),-1,SQLITE_STATIC);
+  sqlite3_bind_int(stmt,4,BookPrice);
 
   if(sqlite3_step(stmt) != SQLITE_DONE)
     {
       cerr<<"Failed to store book data : "<<sqlite3_errmsg(DB.getDB())<<endl;
+      this_thread::sleep_for(chrono::milliseconds(3000));
       return false;
     }
   else

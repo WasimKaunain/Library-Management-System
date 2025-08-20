@@ -9,7 +9,7 @@ class Book
 {
 private:
     std::string BookName;
-    std::string BookID;
+    int BookID;
     std::string BookAuthor;
     std::string BookGenre;
     std::string BookInclusionTime;

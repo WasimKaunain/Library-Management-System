@@ -40,7 +40,7 @@ bool Database::createTables()
         "Password TEXT NOT NULL);"
 
         "CREATE TABLE IF NOT EXISTS Books ("
-        "BookID INTEGER PRIMARY KEY,"
+        "BookID INTEGER PRIMARY KEY AUTOINCREMENT,"
         "Name TEXT NOT NULL,"
         "Author TEXT NOT NULL,"
         "Genre TEXT NOT NULL,"

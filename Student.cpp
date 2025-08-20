@@ -349,8 +349,7 @@ void Student::StudentMenu(Database& DB, string USER = " ")
 void Student::ViewProfile(Database& DB,string USER = " ")
 {
   sqlite3_stmt* stmt;
-  string name ="";
-  const char* sql = "SELECT Name FROM Student WHERE Email = ? OR Mobile = ?";
+  const char* sql = "SELECT * FROM Student WHERE Email = ? OR Mobile = ?";
   if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK) cerr<<"Failed to prepare statement..."<<sqlite3_errmsg(DB.getDB())<<endl;
   sqlite3_bind_text(stmt,1,USER.c_str(),-1,SQLITE_STATIC);
   sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
@@ -358,41 +357,47 @@ void Student::ViewProfile(Database& DB,string USER = " ")
   
   if (rc == SQLITE_ROW)
   {
-    const unsigned char* text = sqlite3_column_text(stmt,0);
-    if (text) 
-      name = reinterpret_cast<const char*>(text);
+    this->name =reinterpret_cast<const char*>(sqlite3_column_text(stmt,0));
+    this->DOB =reinterpret_cast<const char*>(sqlite3_column_text(stmt,1));
+    this->gender =reinterpret_cast<const char*>(sqlite3_column_text(stmt,2));
+    this->mobile =reinterpret_cast<const char*>(sqlite3_column_text(stmt,3));
+    this->EmailID =reinterpret_cast<const char*>(sqlite3_column_text(stmt,4));
+
   }
       else if (rc == SQLITE_DONE) cerr<<"No rows found..."<<sqlite3_errmsg(DB.getDB())<<endl;
   sqlite3_finalize(stmt);
 
-  int choice;
-  clearScreen();
-  Title(name);
-  
-  ShowStudentData(BookRecord); 
+  while(true)
+   {    
+      int choice;
+      clearScreen();
+      Title(name);
+      ShowStudentData(BookRecord); 
 
-   cout<<"1) Edit Profile\t\t\t2) Delete Profile\t\t\t3) Student Menu\t\t\t4) Home Page"<<endl<<endl;
-   cout<<"Enter your choice"<<endl;
-   cin>>choice;
-     switch(choice)
-     {
-       case 1: EditProfile(DB,USER);
-               break;
-
-       case 2: DeleteProfile(DB,USER);
-               break;
-
-       case 3: StudentMenu(DB,USER);
-               break;
-
-       case 4: HomePage(DB);
-               break;
-
-       default: cout<<"Invalid choice..."<<endl;
-                this_thread::sleep_for(chrono::milliseconds(2000));
-                clearScreen();
-                StudentMenu(DB,USER); 
-     }
+       cout<<"1) Edit Profile\t\t\t2) Delete Profile\t\t\t3) Student Menu\t\t\t4) Home Page"<<endl<<endl;
+       cout<<"Enter your choice"<<endl;
+       cin>>choice;
+         switch(choice)
+         {
+           case 1: EditProfile(DB,USER);
+                   break;
+        
+           case 2: if(DeleteProfile(DB,USER))
+                    HomePage(DB);
+                   break;
+        
+           case 3: StudentMenu(DB,USER);
+                   break;
+        
+           case 4: HomePage(DB);
+                   break;
+        
+           default: cout<<"Invalid choice..."<<endl;
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    clearScreen();
+                    StudentMenu(DB,USER); 
+         }
+    }
 }
 
 
@@ -944,79 +949,78 @@ void Student::ResetBookRecord(Database& DB)
 
 void Student::UpdateBookRecord(Database& DB, Book B)
 {
-  ifstream fin;
-  ofstream fout;
-  Student S;
+  // ifstream fin;
+  // ofstream fout;
+  // Student S;
 
-  BookRecord=B;
-  BorrowedTime=Time();
-  //cout<<endl<<asctime(BorrowedTime)<<endl;
-  fin.open("Student_lib.txt",ios::in|ios::binary);
-  fout.open("Tempfile.dat",ios::out|ios::app|ios::binary);
+  // BookRecord=B;
+  // BorrowedTime=Time();
+  // //cout<<endl<<asctime(BorrowedTime)<<endl;
+  // fin.open("Student_lib.txt",ios::in|ios::binary);
+  // fout.open("Tempfile.dat",ios::out|ios::app|ios::binary);
   
-  if(fin)
-    {
-      fin.read((char*)&S,sizeof(S));
-      while(!fin.eof())
-        {
-          if(S.name != name)
-              fout.write((char*)&S,sizeof(S));
-          else
-              fout.write((char*)this,sizeof(*this));
+  // if(fin)
+  //   {
+  //     fin.read((char*)&S,sizeof(S));
+  //     while(!fin.eof())
+  //       {
+  //         if(S.name != name)
+  //             fout.write((char*)&S,sizeof(S));
+  //         else
+  //             fout.write((char*)this,sizeof(*this));
 
-          fin.read((char*)&S,sizeof(S));
-        }
-        fout.close();
-        fin.close();
-        remove("Student_lib.txt");
-        rename("Tempfile.dat","Student_lib.txt");
-    }
-    else
-    {
-      cout<<"Data updation failed..."<<endl;
-      this_thread::sleep_for(chrono::milliseconds(2000));
-      clearScreen();
-    }
-
+  //         fin.read((char*)&S,sizeof(S));
+  //       }
+  //       fout.close();
+  //       fin.close();
+  //       remove("Student_lib.txt");
+  //       rename("Tempfile.dat","Student_lib.txt");
+  //   }
+  //   else
+  //   {
+  //     cout<<"Data updation failed..."<<endl;
+  //     this_thread::sleep_for(chrono::milliseconds(2000));
+  //     clearScreen();
+  //   }
+  cout<<"Sorry for the inconvenience"<<endl;
+  cout<<"Work under progress..."<<endl;
+  this_thread::sleep_for(chrono::milliseconds(3000));
+  return ;
   }
 
 
 
-  void Student::DeleteProfile(Database& DB, string USER)
-{
-  ifstream fin;
-  ofstream fout;
-  Student S;
-  
-   fin.open("Student_lib.txt",ios::in);
-      if(fin)
+  bool Student::DeleteProfile(Database& DB, string USER)
+    {
+      sqlite3_stmt* stmt;
+      const char* sql = "DELETE FROM Student WHERE Email = ? OR Mobile = ?;";
+
+      if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
         {
-          fout.open("Tempfile.txt",ios::out|ios::app);
-          fin.read((char*)&S,sizeof(S));
-          while(!fin.eof())
-            {
-                if(S.name != name)
-                    fout.write((char*)&S,sizeof(S));
-
-                fin.read((char*)&S,sizeof(S));
-            }
-          fout.close();       
-          fin.close();
-          remove("Student_lib.txt");
-          rename("Tempfile.dat","Student_lib.dat");
-          cout<<"Profile Deleted...";
+          cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
           this_thread::sleep_for(chrono::milliseconds(2000));
-          clearScreen();
-          }
+          sqlite3_finalize(stmt);
+          return false;
+        }
 
-        else
-          {
-            cout<<"Student_lib.txt file error"<<endl;
-            this_thread::sleep_for(chrono::milliseconds(2000));
-            clearScreen();
-          }
-  HomePage(DB);
-}
+      sqlite3_bind_text(stmt,1,USER.c_str(),-1,SQLITE_STATIC);
+      sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
+
+      if(sqlite3_step(stmt) == SQLITE_DONE)
+        {
+          cout<<"Profile Deleted successfully."<<endl;
+          this_thread::sleep_for(chrono::milliseconds(2000));
+          sqlite3_finalize(stmt);
+          return true;
+        }
+      else
+        {
+          cerr<<"Failed to delete profile :"<<sqlite3_errmsg(DB.getDB())<<endl;
+          this_thread::sleep_for(chrono::milliseconds(2000));
+          sqlite3_finalize(stmt);
+          return false;
+        }
+    }
 
 
 
@@ -1024,44 +1028,173 @@ void Student::UpdateBookRecord(Database& DB, Book B)
 
 void Student::EditProfile(Database& DB,string USER)
   {
-    ifstream fin;
-    ofstream fout;
-    Student S;
+    Book B;
+    int choice;
+    string value;
+    clearScreen();
+    ShowStudentData(B);
+    cout<<endl<<"Which field/s you want to edit :"<<endl;
+    cout<<"1) Name\t\t\t2) DOB\t\t\t3) Email\t\t\t4) Mobile No."<<endl;
+    cout<<"enter your choice : ";
+    cin>>choice;
+    sqlite3_stmt* stmt;
+    const char* sql;
+    switch(choice)
+      {
+        case 1 :  clearScreen();
+                  cout<<"Enter the new name you want to update : "<<endl;
+                  cin>>value;
 
-     fin.open("Student_lib.txt",ios::in);
-        if(fin)
-          {
-            fout.open("Tempfile.txt",ios::out|ios::app);
-            fin.read((char*)&S,sizeof(S));
-            while(!fin.eof())
-              {
-                  if(S.EmailID != EmailID)
-                      fout.write((char*)&S,sizeof(S));
+                  sql = "UPDATE Student SET Name = ? WHERE Email = ? OR Mobile = ?;";
 
+                  if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
+                    {
+                      cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,3,USER.c_str(),-1,SQLITE_STATIC);
+
+                  if(sqlite3_step(stmt) == SQLITE_DONE)
+                    {
+                      cout<<"Name updated successfully."<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
                   else
+                    {
+                      cerr<<"Failed to update name :"<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  break;
+
+        case 2  : clearScreen();
+                  cout<<"Enter the new date of birth you want to update : "<<endl;
+                  cin>>value;
+                  if(!DOBVerifier(value))
                   {
-                    S.GetData();
-                    fout.write((char*)&S,sizeof(S));
+                    cout<<"Invalid Date of Birth"<<endl<<"Try again..."<<endl;
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    return;
                   }
-                  fin.read((char*)&S,sizeof(S));
-              }
-            fout.close();       
-            fin.close();
-            remove("Student_lib.txt");
-            rename("Tempfile.txt","Student_lib.txt");
-            cout<<"Profile Updated...";
-            this_thread::sleep_for(chrono::milliseconds(2000));
-            clearScreen();
-          }
 
-          else
-            {
-              cout<<"Student_lib.txt file error"<<endl;
-              this_thread::sleep_for(chrono::milliseconds(2000));
-              clearScreen();
-            }
-      StudentMenu(DB, USER);
+                  sql = "UPDATE Student SET DOB = ? WHERE Email = ? OR Mobile = ?;";
 
+                  if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
+                    {
+                      cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,3,USER.c_str(),-1,SQLITE_STATIC);
+
+                  if(sqlite3_step(stmt) == SQLITE_DONE)
+                    {
+                      cout<<"Date of Birth updated successfully."<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  else
+                    {
+                      cerr<<"Failed to update Date of Birth :"<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  break;
+
+        case 3  : clearScreen();
+                  cout<<"Enter the new Email you want to update : "<<endl;
+                  cin>>value;
+                  if(!EmailVerifier(value))
+                  {
+                    cout<<"Invalid Email ID"<<endl<<"Try again..."<<endl;
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    return;
+                  }
+
+                  sql = "UPDATE Student SET Email = ? WHERE Email = ? OR Mobile = ?;";
+
+                  if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
+                    {
+                      cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,3,USER.c_str(),-1,SQLITE_STATIC);
+
+                  if(sqlite3_step(stmt) == SQLITE_DONE)
+                    {
+                      cout<<"Email updated successfully."<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  else
+                    {
+                      cerr<<"Failed to update Email :"<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  break;
+
+        case 4  : clearScreen();
+                  cout<<"Enter the new Mobile No. you want to update : "<<endl;
+                  cin>>value;
+                  if(!MobileVerifier(value))
+                  {
+                    cout<<"Invalid Mobile No."<<endl<<"Try again..."<<endl;
+                    this_thread::sleep_for(chrono::milliseconds(2000));
+                    return;
+                  }
+
+                  sql = "UPDATE Student SET Mobile = ? WHERE Email = ? OR Mobile = ?;";
+
+                  if(sqlite3_prepare_v2(DB.getDB(),sql,-1,&stmt,nullptr) != SQLITE_OK)
+                    {
+                      cerr<<"Failed to prepare statement : "<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  sqlite3_bind_text(stmt,1,value.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,2,USER.c_str(),-1,SQLITE_STATIC);
+                  sqlite3_bind_text(stmt,3,USER.c_str(),-1,SQLITE_STATIC);
+
+                  if(sqlite3_step(stmt) == SQLITE_DONE)
+                    {
+                      cout<<"Mobile No. updated successfully."<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  else
+                    {
+                      cerr<<"Failed to update Mobile No. :"<<sqlite3_errmsg(DB.getDB())<<endl;
+                      this_thread::sleep_for(chrono::milliseconds(2000));
+                      sqlite3_finalize(stmt);
+                      return;
+                    }
+                  break;
+
+        default : cout<<"Invalid choice"<<endl;
+                  this_thread::sleep_for(chrono::milliseconds(3000));
+                  return ;
+      }
   }
 
 

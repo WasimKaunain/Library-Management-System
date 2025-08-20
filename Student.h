@@ -31,7 +31,7 @@ public:
     void StudentMenu(Database&,std::string user);
     void BorrowBook(Database&,std::string bookID);
     void ReturnBook(Database&,std::string bookID);
-    void DeleteProfile(Database&,std::string user);
+    bool DeleteProfile(Database&,std::string user);
     void EditProfile(Database&,std::string user);
     void Login(Database&);
     void Signup(Database&);
